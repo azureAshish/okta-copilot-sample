@@ -97,7 +97,7 @@
         const oktaSignIn = new OktaSignIn({
             baseUrl: "https://trial-2737234-admin.okta.com", //e.g. https://mydomain.okta.com
             clientId: "0oaxwn8ufgFda5Dfq697",
-            redirectUri: "{the published URL for index.html}", // For example http://localhost:5501/CopilotStudioSamples/3rdPartySSOWithOKTA/public/index.html
+            redirectUri: "https://okta-copilot-sample.onrender.com/index.html", // For example http://localhost:5501/CopilotStudioSamples/3rdPartySSOWithOKTA/public/index.html
             authParams: {
                 responseType: ['code'],
                 issuer: "https://trial-2737234-admin.okta.com/oauth2/default", //for example: https://mydomain.okta.com/oauth2/default
@@ -131,7 +131,7 @@
         function signOut() {
             oktaSignIn.authClient.signOut({
                 clearTokensBeforeRedirect: true,
-                postLogoutRedirectUri: '{The published URL for signout.html}'// For example, 'http://127.0.0.1:5501/CopilotStudioSamples/3rdPartySSOWithOKTA/public/signout.html'
+                postLogoutRedirectUri: 'https://okta-copilot-sample.onrender.com/signout.html'// For example, 'http://127.0.0.1:5501/CopilotStudioSamples/3rdPartySSOWithOKTA/public/signout.html'
             });
         }
 
