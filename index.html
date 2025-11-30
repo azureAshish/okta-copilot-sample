@@ -7,7 +7,7 @@
   <!-- Okta Auth JS (browser-safe global) -->
   <script src="https://global.oktacdn.com/okta-auth-js/7.14.1/okta-auth-js.min.js"></script>
 
-  <!-- Optional: Okta Sign-In Widget CSS & JS -->
+  <!-- Okta Sign-In Widget CSS & JS -->
   <link rel="stylesheet" href="https://global.oktacdn.com/okta-signin-widget/7.37.1/css/okta-sign-in.min.css" />
   <script src="https://global.oktacdn.com/okta-signin-widget/7.37.1/js/okta-sign-in.min.js"></script>
 
@@ -29,10 +29,10 @@
       // ---------- Configuration ----------
       const oktaDomain = "trial-2737234.okta.com";
       const clientId = "0oaxwn8ufgFda5Dfq697";
-      const redirectUri = "https://okta-copilot-sample.onrender.com/index.html"; // updated
+      const redirectUri = "https://okta-copilot-sample.onrender.com/index.html";
       const issuer = `https://${oktaDomain}/oauth2/default`;
       const scopes = ["openid", "profile", "email"];
-      const postLogoutRedirectUri = "https://okta-copilot-sample.onrender.com/signout.html"; // updated
+      const postLogoutRedirectUri = "https://okta-copilot-sample.onrender.com/signout.html";
 
       // ---------- Initialize OktaAuth ----------
       const authClient = new OktaAuth({
@@ -44,44 +44,20 @@
       });
 
       // ---------- Handle redirect callback ----------
-      async function handleRedirectCallback() {
-        try {
-          const tokens = await authClient.token.parseFromUrl();
-          authClient.tokenManager.setTokens(tokens);
-          showUserInfo();
-        } catch (err) {
-          // Not a redirect callback, ignore
-        }
-      }
-
-      // ---------- Show login widget ----------
-      function showLoginWidget() {
-        const widget = new OktaSignIn({
-          baseUrl: `https://${oktaDomain}`,
-          clientId: clientId,
-          redirectUri: redirectUri,
-          authParams: {
-            issuer: issuer,
-            pkce: true,
-            scopes: scopes
-          }
-        });
-
-        widget.renderEl(
-          { el: '#login-container' },
-          () => { /* success callback will redirect */ },
-          (err) => console.error("Widget error", err)
-        );
+      try {
+        const tokens = await authClient.token.parseFromUrl();
+        authClient.tokenManager.setTokens(tokens);
+      } catch (err) {
+        // Not a redirect callback; ignore
       }
 
       // ---------- Display user info ----------
       async function showUserInfo() {
-        document.getElementById("login-container").style.display = "none";
-        document.getElementById("user-info").style.display = "block";
-
         try {
           const user = await authClient.getUser();
-          document.getElementById("user-name").textContent = user.name || user.email || user.sub;
+          document.getElementById("user-name").textContent = user.name || user.email || user.preferred_username;
+          document.getElementById("login-container").style.display = "none";
+          document.getElementById("user-info").style.display = "block";
         } catch (err) {
           console.error("Failed to get user info:", err);
         }
@@ -89,23 +65,33 @@
 
       // ---------- Logout ----------
       async function logout() {
-        await authClient.signOut({
-          postLogoutRedirectUri: postLogoutRedirectUri
-        });
-        document.getElementById("login-container").style.display = "block";
-        document.getElementById("user-info").style.display = "none";
+        await authClient.signOut({ postLogoutRedirectUri });
       }
 
       document.getElementById("logout").onclick = logout;
 
       // ---------- Main flow ----------
-      await handleRedirectCallback();
-
       const authenticated = await authClient.isAuthenticated();
-      if (!authenticated) {
-        showLoginWidget();
-      } else {
+      if (authenticated) {
         showUserInfo();
+      } else {
+        // ---------- Show login widget ----------
+        const widget = new OktaSignIn({
+          baseUrl: `https://${oktaDomain}`,
+          clientId: clientId,
+          redirectUri: redirectUri,
+          authParams: {
+            issuer,
+            pkce: true,
+            scopes
+          }
+        });
+
+        widget.renderEl(
+          { el: '#login-container' },
+          () => { /* success callback redirects automatically */ },
+          (err) => console.error("Widget error:", err)
+        );
       }
     };
   </script>
