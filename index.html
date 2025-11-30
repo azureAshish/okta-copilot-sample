@@ -4,12 +4,15 @@
   <meta charset="UTF-8">
   <title>Okta Copilot Sample SPA</title>
 
-  <!-- Okta Auth JS (browser-safe global) -->
+  <!-- Okta Auth JS -->
   <script src="https://global.oktacdn.com/okta-auth-js/7.14.1/okta-auth-js.min.js"></script>
 
   <!-- Okta Sign-In Widget CSS & JS -->
   <link rel="stylesheet" href="https://global.oktacdn.com/okta-signin-widget/7.37.1/css/okta-sign-in.min.css" />
   <script src="https://global.oktacdn.com/okta-signin-widget/7.37.1/js/okta-sign-in.min.js"></script>
+
+  <!-- Favicon placeholder to avoid 404 -->
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
@@ -44,16 +47,26 @@
       });
 
       // ---------- Handle redirect callback ----------
-      try {
-        const tokens = await authClient.token.parseFromUrl();
-        authClient.tokenManager.setTokens(tokens);
-      } catch (err) {
-        // Not a redirect callback; ignore
+      async function handleRedirectCallback() {
+        try {
+          const tokenResponse = await authClient.token.parseFromUrl();
+          if (tokenResponse.tokens) {
+            authClient.tokenManager.setTokens(tokenResponse.tokens);
+          }
+        } catch (err) {
+          // Not a redirect callback, ignore
+        }
       }
 
       // ---------- Display user info ----------
       async function showUserInfo() {
         try {
+          // Only call getUser if idToken exists
+          const idToken = await authClient.tokenManager.get("idToken");
+          if (!idToken) {
+            console.warn("No valid token found. User might not be logged in.");
+            return;
+          }
           const user = await authClient.getUser();
           document.getElementById("user-name").textContent = user.name || user.email || user.preferred_username;
           document.getElementById("login-container").style.display = "none";
@@ -67,13 +80,14 @@
       async function logout() {
         await authClient.signOut({ postLogoutRedirectUri });
       }
-
       document.getElementById("logout").onclick = logout;
 
       // ---------- Main flow ----------
+      await handleRedirectCallback();
+
       const authenticated = await authClient.isAuthenticated();
       if (authenticated) {
-        showUserInfo();
+        await showUserInfo();
       } else {
         // ---------- Show login widget ----------
         const widget = new OktaSignIn({
@@ -89,7 +103,7 @@
 
         widget.renderEl(
           { el: '#login-container' },
-          () => { /* success callback redirects automatically */ },
+          () => { /* login success will redirect */ },
           (err) => console.error("Widget error:", err)
         );
       }
