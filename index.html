@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <title>Okta Copilot Sample SPA</title>
 
-  <!-- Okta Auth JS (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@okta/okta-auth-js@7.14.1/dist/okta-auth-js.umd.min.js"></script>
+  <!-- Okta Auth JS (browser-safe global) -->
+  <script src="https://global.oktacdn.com/okta-auth-js/7.14.1/okta-auth-js.min.js"></script>
 
-  <!-- Optional: Okta Sign-In Widget CSS -->
+  <!-- Optional: Okta Sign-In Widget CSS & JS -->
   <link rel="stylesheet" href="https://global.oktacdn.com/okta-signin-widget/7.37.1/css/okta-sign-in.min.css" />
   <script src="https://global.oktacdn.com/okta-signin-widget/7.37.1/js/okta-sign-in.min.js"></script>
 
@@ -29,12 +29,12 @@
       // ---------- Configuration ----------
       const oktaDomain = "trial-2737234.okta.com";
       const clientId = "0oaxwn8ufgFda5Dfq697";
-      const redirectUri = window.location.origin + window.location.pathname; // must match Okta SPA redirect URI exactly
+      const redirectUri = window.location.origin + window.location.pathname;
       const issuer = `https://${oktaDomain}/oauth2/default`;
       const scopes = ["openid", "profile", "email"];
 
       // ---------- Initialize OktaAuth ----------
-      const authClient = new OktaAuth.default({
+      const authClient = new OktaAuth({
         issuer,
         clientId,
         redirectUri,
