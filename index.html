@@ -29,9 +29,10 @@
       // ---------- Configuration ----------
       const oktaDomain = "trial-2737234.okta.com";
       const clientId = "0oaxwn8ufgFda5Dfq697";
-      const redirectUri = window.location.origin + window.location.pathname;
+      const redirectUri = "https://okta-copilot-sample.onrender.com/index.html"; // updated
       const issuer = `https://${oktaDomain}/oauth2/default`;
       const scopes = ["openid", "profile", "email"];
+      const postLogoutRedirectUri = "https://okta-copilot-sample.onrender.com/signout.html"; // updated
 
       // ---------- Initialize OktaAuth ----------
       const authClient = new OktaAuth({
@@ -88,7 +89,9 @@
 
       // ---------- Logout ----------
       async function logout() {
-        await authClient.signOut();
+        await authClient.signOut({
+          postLogoutRedirectUri: postLogoutRedirectUri
+        });
         document.getElementById("login-container").style.display = "block";
         document.getElementById("user-info").style.display = "none";
       }
