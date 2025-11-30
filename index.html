@@ -1,48 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Okta Copilot Sample SPA</title>
-  <!-- Load Okta Sign‑In Widget CSS if you need hosted widget styling -->
+
+  <!-- Okta Sign-In Widget CSS (optional if you want a nice login UI) -->
   <link rel="stylesheet" href="https://global.oktacdn.com/okta-signin-widget/7.37.1/css/okta-sign-in.min.css" />
-  <script src="https://global.oktacdn.com/okta-signin-widget/7.37.1/js/okta-sign-in.min.js"></script>
+
+  <!-- Okta Auth JS (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/@okta/okta-auth-js@7.14.1/dist/okta-auth-js.umd.min.js"></script>
+
+  <!-- Okta Sign-In Widget JS (optional) -->
+  <script src="https://global.oktacdn.com/okta-signin-widget/7.37.1/js/okta-sign-in.min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    #user-info { display: none; }
+  </style>
 </head>
 <body>
   <div id="login-container"></div>
-  <div id="user-info" style="display: none;">
+
+  <div id="user-info">
     <h2>Welcome, <span id="user-name"></span></h2>
-    <button id="logout">Sign out</button>
+    <button id="logout">Sign Out</button>
   </div>
 
   <script>
-    // Configuration
+    // ---------- Configuration ----------
     const oktaDomain = "trial-2737234.okta.com";
     const clientId = "0oaxwn8ufgFda5Dfq697";
-    const redirectUri = window.location.origin + window.location.pathname; // ensure exact match with Okta redirect URI
+    const redirectUri = window.location.origin + window.location.pathname; // must match Okta SPA redirect URI exactly
     const issuer = `https://${oktaDomain}/oauth2/default`;
+    const scopes = ["openid", "profile", "email"];
 
-    const authClient = new OktaAuth({   // OktaAuth from okta-auth-js
+    const authClient = new OktaAuth({
       issuer,
       clientId,
       redirectUri,
       pkce: true,
-      scopes: ["openid", "profile", "email"],
+      scopes
     });
 
-    // On page load — check if returning from Okta with code
-    async function handleCallback() {
+    // ---------- Functions ----------
+
+    async function handleRedirectCallback() {
       try {
         const tokens = await authClient.token.parseFromUrl();
         authClient.tokenManager.setTokens(tokens);
         showUserInfo();
       } catch (err) {
-        // Not a callback or no code — ignore
+        // Not a redirect callback, ignore
       }
     }
 
-    function showLogin() {
-      // Option A: Use Sign-In Widget
+    function showLoginWidget() {
       const widget = new OktaSignIn({
         baseUrl: `https://${oktaDomain}`,
         clientId: clientId,
@@ -50,39 +62,44 @@
         authParams: {
           issuer: issuer,
           pkce: true,
-          scopes: ["openid", "profile", "email"]
+          scopes: scopes
         }
       });
+
       widget.renderEl(
         { el: '#login-container' },
-        () => { /* success — should redirect */ },
-        (err) => console.error(err)
+        () => { /* success will redirect */ },
+        (err) => console.error("Widget error", err)
       );
     }
 
     async function showUserInfo() {
       document.getElementById("login-container").style.display = "none";
       document.getElementById("user-info").style.display = "block";
+
       try {
         const user = await authClient.getUser();
         document.getElementById("user-name").textContent = user.name || user.email || user.sub;
-      } catch (e) {
-        console.error("Failed to get user info", e);
+      } catch (err) {
+        console.error("Failed to get user info:", err);
       }
     }
 
     async function logout() {
       await authClient.signOut();
+      document.getElementById("login-container").style.display = "block";
+      document.getElementById("user-info").style.display = "none";
     }
 
     document.getElementById("logout").onclick = logout;
 
-    // Main flow
+    // ---------- Main ----------
     window.onload = async () => {
-      await handleCallback();
+      await handleRedirectCallback();
+
       const authenticated = await authClient.isAuthenticated();
       if (!authenticated) {
-        showLogin();
+        showLoginWidget();
       } else {
         showUserInfo();
       }
